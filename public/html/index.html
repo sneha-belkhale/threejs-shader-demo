@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>three.js empty template</title>
+    <script src="js/THREE/three.min.js"></script>
+    <script src="js/THREE/OBJLoader.js"></script>
+    <script src="js/THREE/OrbitControls.js"></script>
+    <style>
+      body { margin: 0; }
+    </style>
+  </head>
+
+  <body>
+    <script>
+      //initialize scene
+      let scene = new THREE.Scene();
+      //initialize camera
+      let camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+      //set up orbit controls on the camera
+      let controls = new THREE.OrbitControls(camera);
+      //initialize renderer
+      let renderer = new THREE.WebGLRenderer();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      //add renderer to the html page
+      document.body.appendChild( renderer.domElement );
+
+      let animate = function () {
+        controls.update();
+        requestAnimationFrame( animate );
+        renderer.render(scene, camera);
+      };
+
+      animate();
+    </script>
+  </body>
+</html>
