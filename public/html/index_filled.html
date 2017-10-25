@@ -1,92 +1,91 @@
 <html>
   <head>
-    <title>My first three.js app</title>
+    <title>three.js empty template</title>
     <script src="js/THREE/three.min.js"></script>
     <script src="js/THREE/OBJLoader.js"></script>
     <script src="js/THREE/OrbitControls.js"></script>
     <style>
       body { margin: 0; }
-      canvas { width: 100%; height: 100% }
     </style>
   </head>
 
   <body>
     <script id="vertexShader" type="x-shader/x-vertex">
-      varying vec3 vPos;
+
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       uniform float timeDelta;
+
       void main() {
-        vec3 center = vec3(0.0,0.0,0.0);
-        vNormal = normalMatrix * normal;
+        vec3 center = vec3(0.0, 0.0, 0.0);
         vec3 p = position;
-        //float distance = length(uv - center);
-        float distance = length(p - center);
-        //p += (vNormal*sin(timeDelta/1000.0)*0.1);
+        float distance = length(center - p);
         p += sin(distance + timeDelta/1000.0)*0.5;
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         vViewPosition = -modelViewPosition.xyz;
         gl_Position = projectionMatrix * modelViewPosition;
+        vNormal = normalMatrix * normal;
       }
+
     </script>
-
     <script>
-
+      //initialize scene
       let scene = new THREE.Scene();
+      //initialize camera
       let camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+      //set up orbit controls on the camera
       let controls = new THREE.OrbitControls(camera);
+      //initialize renderer
       let renderer = new THREE.WebGLRenderer();
       renderer.setSize( window.innerWidth, window.innerHeight );
+      //add renderer to the html page
       document.body.appendChild( renderer.domElement );
 
-
-      var uniform = {
-        emissive: {type: 'c', value: new THREE.Color(0x333333)},
-        specular: {type: 'c', value: new THREE.Color(0xFFFFFF)},
-        timeDelta: {value: 0},
-      }
-      var phongShader = THREE.ShaderLib.phong;
-      var phongUniform = THREE.UniformsUtils.clone(phongShader.uniforms); //copy over the remaining values
-
-      this.uniforms = THREE.UniformsUtils.merge([phongUniform, uniform])
-      console.log(this.uniforms)
-
-      var material = new THREE.ShaderMaterial({
-        uniforms: this.uniforms,
-        vertexShader: document.getElementById( 'vertexShader' ).textContent,
-        fragmentShader: phongShader.fragmentShader,
-        lights: true,
-        side: THREE.DoubleSide,
-        transparent: true,
-      });
-
-      let geometry = new THREE.BoxGeometry( 1, 1, 1 );
-      let manager = new THREE.LoadingManager();
-      console.log(geometry);
       var light = new THREE.PointLight( 0xa5ccff, 1 );
       light.position.set(300,300,0);
       scene.add( light );
 
+      var uniforms = ({
+        timeDelta : {type: 'f', value: 0},
+        emissive : {type: 'c', value: new THREE.Color(0x5e807f)},
+        specular : {type: 'c', value: new THREE.Color(0xe09278)}
+      });
+      var phongShader = THREE.ShaderLib.phong;
+
+      var mUniforms = THREE.UniformsUtils.merge([phongShader.uniforms, uniforms]);
+
+      //define monkey monkeyMaterial
+      var monkeyMaterial = new THREE.ShaderMaterial ({
+        uniforms : mUniforms,
+        vertexShader: document.getElementById( 'vertexShader' ).textContent,
+        fragmentShader: phongShader.fragmentShader,
+        lights: true,
+        side : THREE.DoubleSide
+      });
+
+      //load monkey object
+      var loader = new THREE.OBJLoader();
       var monkeyMesh;
-      let loader = new THREE.OBJLoader( manager );
-			loader.load( 'assets/monkey.obj', function ( object ) {
-        object.traverse((child) => {
-            if ( child instanceof THREE.Mesh ) {
-                var geometry1 = new THREE.Geometry().fromBufferGeometry( child.geometry );
-                monkeyMesh = new THREE.Mesh(geometry1, material);
-                scene.add(monkeyMesh);
-            }
-        });
-			});
+      loader.load( 'assets/monkey.obj', function ( object ) {
+        object.traverse( function ( child ) {
+          if ( child instanceof THREE.Mesh ) {
+            console.log(child.geometry)
+            var geo1 = child.geometry;
+            monkeyMesh = new THREE.Mesh(geo1, monkeyMaterial);
+          }
+        } );
+        scene.add( monkeyMesh );
+      });
 
       camera.position.z = 5;
+
       var startTime = Date.now();
       var timeDelta = 0;
 
-      let animate = () => {
+      let animate = function () {
+        timeDelta = Date.now() - startTime;
         controls.update();
         requestAnimationFrame( animate );
-        timeDelta = Date.now() - startTime;
         monkeyMesh.material.uniforms.timeDelta.value = timeDelta;
         renderer.render(scene, camera);
       };
